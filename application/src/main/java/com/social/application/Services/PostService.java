@@ -8,13 +8,18 @@ import com.social.application.Repositories.LikeRepository;
 import com.social.application.Repositories.PostRepository;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.http.HttpStatus;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Stack;
+import java.util.UUID;
 
 @Service
 public class PostService {
@@ -24,25 +29,35 @@ public class PostService {
     @PersistenceContext
     EntityManager entityManager;
 
+    @Value("${file.upload-dir}")
+    private String uploadDir;
+
     public PostService(PostRepository postRepository, LikeRepository likeRepository) {
         this.postRepository = postRepository;
         this.likeRepository = likeRepository;
     }
 
-    public Post insertPost(Post post){
-
-        Long userId = post.getUser().getId();
+    public Post insertPost(Long userId, String caption, MultipartFile image) throws IOException {
 
         User user = entityManager.find(User.class, userId);
-        if(user == null){
+        if (user == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found");
         }
 
+        String fileName = null;
+        if (image != null && !image.isEmpty()) {
+            fileName = UUID.randomUUID() + "_" + image.getOriginalFilename();
+            File destination = new File(uploadDir + File.separator + fileName);
+            image.transferTo(destination);
+        }
+
+        Post post = new Post();
         post.setUser(user);
+        post.setCaption(caption);
+        post.setImageUrl(fileName);
 
         return postRepository.save(post);
     }
-
     public List<PostDTO> getAllPosts() {
 
         return postRepository.findAll().stream()

@@ -15,11 +15,11 @@ public class Like {
 //    private Long userId;
 //    private Long postId;
 
-    @ManyToOne(cascade = CascadeType.PERSIST)
+    @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @ManyToOne(cascade = CascadeType.PERSIST)
+    @ManyToOne
     @JoinColumn(name = "post_id", nullable = false)
     private Post post;
 

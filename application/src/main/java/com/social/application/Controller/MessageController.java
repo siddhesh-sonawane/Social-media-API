@@ -16,16 +16,17 @@ public class MessageController {
     public MessageController(MessageService messageService) {
         this.messageService = messageService;
     }
+
     @GetMapping
-    public List<Message>fetchAllMsg(){
-        return messageService.fetchAllMessage();
+    public ResponseEntity<ApiResponse<List<Message>>> fetchAllMsg() {
+        List<Message> messages = messageService.fetchAllMessage();
+        return ResponseEntity.ok(ApiResponse.success("Messages fetched", messages));
     }
 
-    //hello
     @PostMapping
-    public Message createMessage(@RequestBody Message message){
-        Message result =messageService.insertMessage(message);
-        return result;
+    public ResponseEntity<ApiResponse<Message>> createMessage(@RequestBody Message message) {
+        Message result = messageService.insertMessage(message);
+        return ResponseEntity.status(201).body(ApiResponse.success("Message created", result));
     }
 
     // get mapping for the fetching message by specific userid //

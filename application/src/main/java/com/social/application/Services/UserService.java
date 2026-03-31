@@ -86,7 +86,7 @@ public class UserService {
         );
     }
 
-    public User registerUser(UserRequestDTO dto ) throws IOException {
+    public User registerUser(UserRequestDTO dto) throws IOException {
 
         MultipartFile file = dto.getProfileImage();
         MultipartFile file1 = dto.getCoverImage();
@@ -95,12 +95,11 @@ public class UserService {
         String fileName1 = null;
 
         if (file != null && !file.isEmpty()) {
-            // generate unique file name
             fileName = UUID.randomUUID() + "_" + file.getOriginalFilename();
-            fileName1 = UUID.randomUUID()+ "_" + file1.getOriginalFilename();
+            fileName1 = UUID.randomUUID() + "_" + file1.getOriginalFilename();
 
             File destination = new File(uploadDir + File.separator + fileName);
-            File destination1 = new File(uploadDir + File.separator + fileName);
+            File destination1 = new File(uploadDir + File.separator + fileName1);
 
             file.transferTo(destination);
             file1.transferTo(destination1);
@@ -108,12 +107,31 @@ public class UserService {
 
         User user = new User();
         user.setUsername(dto.getUsername());
+        user.setEmail(dto.getEmail());
         user.setPassword(dto.getPassword());
         user.setBio(dto.getBio());
-        user.setProfileImage(fileName); // store only file name/path
-        user.setCoverImage(fileName);
+        user.setProfileImage(fileName);
+        user.setCoverImage(fileName1);
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         return userRepository.save(user);
+    }
 
+
+    public User fetchUserByEmail(String email) {
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+    }
+
+    public User uploadProfilePhoto(Long id, MultipartFile file) {
+        User user = fetchUserById(id);
+        try {
+            String fileName = UUID.randomUUID() + "_" + file.getOriginalFilename();
+            File destination = new File(uploadDir + File.separator + fileName);
+            file.transferTo(destination);
+            user.setProfileImage(fileName);
+            return userRepository.save(user);
+        } catch (IOException e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to upload photo");
+        }
     }
 }

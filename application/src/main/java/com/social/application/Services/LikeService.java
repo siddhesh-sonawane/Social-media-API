@@ -40,8 +40,7 @@ public class LikeService {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Post not found");
         }
 
-        // critical business rule (you completely missed this)
-        boolean alreadyLiked = likeRepository.existsByUserIdAndPostId(userId, postId);
+        boolean alreadyLiked = likeRepository.existsByUser_IdAndPost_Id(userId, postId);
         if(alreadyLiked){
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Post already liked by user");
         }

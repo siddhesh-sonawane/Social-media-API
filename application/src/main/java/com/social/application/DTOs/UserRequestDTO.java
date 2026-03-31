@@ -5,6 +5,7 @@ public class UserRequestDTO {
 
 
     private String username;
+    private String email;
 
     private String bio;
     private long follower;
@@ -37,6 +38,14 @@ public class UserRequestDTO {
         this.username = username;
     }
 
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
     public String getBio() {
         return bio;
     }
@@ -44,7 +53,6 @@ public class UserRequestDTO {
     public void setBio(String bio) {
         this.bio = bio;
     }
-
 
     public long getFollower() {
         return follower;

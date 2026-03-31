@@ -5,8 +5,10 @@ import com.social.application.Models.Post;
 import com.social.application.Models.User;
 import com.social.application.Services.PostService;
 import com.social.application.Utility.ApiResponse;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -29,13 +31,20 @@ public class PostController {
         );
     }
 
-    @PostMapping
-    public ResponseEntity<ApiResponse<Post>> createPost(@RequestBody Post post){
-
-        Post result = postService.insertPost(post);
-
-        return ResponseEntity.status(201)
-                .body(ApiResponse.success("Post created", result));
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ApiResponse<Post>> createPost(
+            @RequestParam Long userId,
+            @RequestParam String caption,
+            @RequestParam(required = false) MultipartFile image
+    ) {
+        try {
+            Post result = postService.insertPost(userId, caption, image);
+            return ResponseEntity.status(201)
+                    .body(ApiResponse.success("Post created", result));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error(e.getMessage(), "POST_CREATE_FAILED"));
+        }
     }
 
     @GetMapping("/{id}")
@@ -66,14 +75,7 @@ public class PostController {
     }
 
 
-    @GetMapping("/posts")
-    public ResponseEntity<ApiResponse<List<PostDTO>>> getPosts() {
-        List<PostDTO> posts = postService.getAllPosts();
 
-        return ResponseEntity.ok(
-                ApiResponse.success("Posts fetched successfully", posts)
-        );
-    }
 
 //    @GetMapping
 //    public ResponseEntity<ApiResponse<List<PostDTO>>> getPosts(){

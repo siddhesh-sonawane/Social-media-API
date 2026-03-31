@@ -74,9 +74,9 @@ public class UserController {
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<UserDTO>> login(@RequestBody LoginRequestDTO request) {
 
-        User user = authService.login(request);
+        com.social.application.DTOs.AuthResponseDTO authResponse = authService.login(request);
 
-        UserDTO dto = userService.getUserDTO(user.getId());
+        UserDTO dto = userService.getUserDTO(authResponse.getUser().getId());
 
         return ResponseEntity.ok(
                 ApiResponse.success("Login successful", dto)
@@ -99,21 +99,19 @@ public class UserController {
         );
     }
 
-
     @PostMapping("/register")
     public ResponseEntity<?> register(
             @RequestParam String name,
-           // @RequestParam String email,
+            @RequestParam String email,
             @RequestParam String password,
             @RequestParam String bio,
-           /* @RequestParam long follower,
-            @RequestParam long following,*/
             @RequestParam(required = false) MultipartFile image,
             @RequestParam(required = false) MultipartFile cover
     ) {
         try {
             UserRequestDTO dto = new UserRequestDTO();
             dto.setUsername(name);
+            dto.setEmail(email);
             dto.setPassword(password);
             dto.setProfileImage(image);
             dto.setCoverImage(cover);
@@ -122,13 +120,14 @@ public class UserController {
             dto.setFollowing(0);
 
             User user = userService.registerUser(dto);
-
             return ResponseEntity.ok(user);
 
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
+
+
 
     @GetMapping("/image/{fileName}")
     public ResponseEntity<Resource> getImage(@PathVariable String fileName) throws IOException {
@@ -150,4 +149,19 @@ public class UserController {
                 .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + fileName + "\"")
                 .body(resource);
     }
+
+
+
+
+    @PostMapping(value = "/{id}/profile-photo", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ApiResponse<User>> uploadProfilePhoto(
+            @PathVariable Long id,
+            @RequestParam("file") MultipartFile file
+    ) {
+        User updatedUser = userService.uploadProfilePhoto(id, file);
+        return ResponseEntity.ok(ApiResponse.success("Profile photo uploaded", updatedUser));
+    }
+
+
+
 }

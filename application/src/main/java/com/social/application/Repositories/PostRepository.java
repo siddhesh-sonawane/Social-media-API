@@ -1,5 +1,4 @@
 package com.social.application.Repositories;
-import com.social.application.DTOs.PostDTO;
 import com.social.application.Models.Post;
 import org.springframework.data.jpa.repository.JpaRepository;
 
