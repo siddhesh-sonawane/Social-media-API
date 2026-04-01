@@ -1,6 +1,6 @@
 # 📱 SocialApp — RESTful Social Media Backend API
 
-> A fully functional, production-structured **RESTful backend** for a social media platform built with **Spring Boot 4**, **Spring Security**, **Spring Data JPA**, and **MySQL**. The application covers the complete core feature set of a social network — user authentication, posts, comments, likes, follow relationships, and real-time-ready direct messaging — all delivered through a clean, layered MVC architecture.
+> A fully functional, production-structured **RESTful backend** for a social media platform built with **Spring Boot 4**, **Spring Security**, **Spring Data JPA**, and **MySQL**. The application covers the complete core feature set of a social network — user authentication, posts, comments, likes, follow relationships, and direct messaging — all delivered through a clean, layered MVC architecture.
 
 <br/>
 
@@ -102,7 +102,7 @@ HTTP Request
 ```
 
 **Key design decisions:**
-- `EntityManager` is used directly in services alongside repositories where fine-grained JPA control is needed (e.g., resolving referenced entities before association)
+- `EntityManager` is used directly in services alongside repositories where fine-grained JPA control is needed
 - DTOs are constructed in the service layer — the controller never exposes raw JPA entities
 - `ApiResponse<T>` is a generic wrapper used universally, keeping the client contract consistent
 
@@ -238,6 +238,26 @@ application/
 ### Base URL
 ```
 http://localhost:8080
+```
+
+### Response Envelope
+Every endpoint returns:
+```json
+{
+  "success": true,
+  "message": "Human readable message",
+  "data": { },
+  "error": null
+}
+```
+On failure:
+```json
+{
+  "success": false,
+  "message": "Something went wrong",
+  "data": null,
+  "error": "ERROR_CODE or exception message"
+}
 ```
 
 ---
@@ -462,7 +482,7 @@ All other routes → require authentication
 - The `password` field on the `User` entity is annotated with `@JsonProperty(access = WRITE_ONLY)` — accepted on input but **never serialised in any response**
 - `AuthService.login()` uses `passwordEncoder.matches()` to verify credentials against the stored BCrypt hash — the raw password is never stored or compared directly
 
-> ⚠️ **Production Note:** The current setup uses HTTP Basic auth. For a deployed application, replace this with **JWT (JSON Web Token)** stateless authentication for security and scalability.
+> ⚠️ **Production Note:** For a deployed application, replace HTTP Basic with **JWT (JSON Web Token)** stateless authentication for security and scalability.
 
 ---
 
@@ -488,14 +508,12 @@ if (followerId.equals(followingId)) {
 ```
 
 ### Entity Resolution Before Association
-Before linking JPA relationships, the entity is verified to exist:
 ```java
 User user = entityManager.find(User.class, userId);
 if (user == null) throw new ResponseStatusException(NOT_FOUND, "User not found");
 ```
 
 ### Chronological Chat Assembly
-Messages between two users are fetched bidirectionally, merged, and sorted by timestamp:
 ```java
 List<Message> aToB = repo.findBySender_IdAndReceiver_IdOrderByCreatedAtAsc(user1, user2);
 List<Message> bToA = repo.findBySender_IdAndReceiver_IdOrderByCreatedAtAsc(user2, user1);
@@ -511,7 +529,6 @@ Raw JPA entities are never sent to the client. The service layer maps them to cl
 ### UserDTO
 Fields: `id`, `username`, `bio`, `profileImage`, `follower` (count), `following` (count)
 
-Follower/following counts are computed at query time:
 ```java
 long followers = followRepository.countByFollowingUser_Id(userId);
 long following = followRepository.countByFollowerUser_Id(userId);
@@ -520,7 +537,7 @@ long following = followRepository.countByFollowerUser_Id(userId);
 ### PostDTO
 Fields: `id`, `caption`, `likeCount`, `comments` (List of CommentDTO), `likedBy` (List of usernames)
 
-Like count is fetched from `LikeRepository.countByPost_Id()`. The `likedBy` list is assembled using Java Streams mapping `Like → username`.
+Like count fetched from `LikeRepository.countByPost_Id()`. The `likedBy` list assembled via Java Streams mapping `Like → username`.
 
 ### CommentDTO
 Fields: `id`, `text`
@@ -536,8 +553,6 @@ Fields: `email`, `password`
 ## ⚠️ Error Handling
 
 ### GlobalExceptionHandler
-A `@ControllerAdvice` class intercepts all unhandled exceptions:
-
 ```java
 @ExceptionHandler(Exception.class)
 public ResponseEntity<ApiResponse<Object>> handleException(Exception ex) {
@@ -597,7 +612,7 @@ spring.jpa.show-sql=true
 spring.jpa.properties.hibernate.format_sql=true
 ```
 
-> `ddl-auto=update` means Hibernate will auto-create and migrate tables on startup — no manual SQL scripts needed.
+> `ddl-auto=update` — Hibernate auto-creates and migrates tables on startup. No manual SQL scripts needed.
 
 ### 4. Build & Run
 
@@ -613,7 +628,6 @@ The API will be live at `http://localhost:8080`
 
 ### 5. Test the API
 
-Quick sanity check with curl:
 ```bash
 curl -X POST http://localhost:8080/user \
   -H "Content-Type: application/json" \
@@ -633,7 +647,7 @@ Or use **Postman** / **Insomnia** for full API exploration.
 | `spring.datasource.password` | *(set yours)* | DB password |
 | `spring.jpa.hibernate.ddl-auto` | `update` | Schema strategy |
 | `spring.jpa.show-sql` | `true` | Log SQL to console |
-| `server.port` | `8080` | HTTP port (add to properties to change) |
+| `server.port` | `8080` | HTTP port |
 
 ---
 
@@ -641,7 +655,7 @@ Or use **Postman** / **Insomnia** for full API exploration.
 
 - [ ] JWT-based stateless authentication
 - [ ] Refresh token support
-- [ ] Pagination & sorting on feed, comments, messages (`Pageable`)
+- [ ] Pagination & sorting on feed, comments, messages
 - [ ] Post image upload via AWS S3 or Cloudinary
 - [ ] Real-time messaging with WebSocket / STOMP
 - [ ] Notification system for likes, follows, comments
@@ -649,7 +663,7 @@ Or use **Postman** / **Insomnia** for full API exploration.
 - [ ] Swagger / OpenAPI auto-generated documentation
 - [ ] Docker + docker-compose support
 - [ ] Bean Validation (`@Valid`) on all request bodies
-- [ ] Duplicate follow prevention (mirror the like guard)
+- [ ] Duplicate follow prevention
 
 ---
 
